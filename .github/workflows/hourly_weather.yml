@@ -1,0 +1,35 @@
+name: Hourly Weather CSV Update
+
+on:
+  schedule:
+    # Runs at minute 0 of every hour (UTC)
+    - cron: '0 * * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Allows workflow to push updated CSV back to repo
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run Weather Script
+        run: python weather_dashboard.py
+
+      - name: Commit and Push Updated CSV
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add weather_dashboard.csv
+          git diff --staged --quiet || (git commit -m "Hourly weather update [skip ci]" && git push)
